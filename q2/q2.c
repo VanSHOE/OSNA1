@@ -5,17 +5,28 @@
 #include <stdio.h>
 #include <string.h>
 
+int convertStringtoNumber(char *string)
+{
+    int number = 0;
+    for (int i = 0; i < strlen(string); i++)
+    {
+        number += (string[i] - '0') * pow(10, strlen(string) - i - 1);
+    }
+
+    return number;
+}
+
 void main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 4)
     {
-        printf("Usage: %s <input_file>\n", argv[0]);
+        printf("Usage: %s <input_file> start_char end_char\n", argv[0]);
         return;
     }
     char buff[1];
     int input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
-    const char *outputPath = "./Assignment/1_";
+    const char *outputPath = "./Assignment/2_";
     char outputFileName[strlen(argv[1]) + strlen(outputPath)];
     strcpy(outputFileName, outputPath);
     strcat(outputFileName, argv[1]);
