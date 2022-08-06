@@ -16,7 +16,7 @@ void main(int argc, char **argv)
     int input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
     const char *outputPath = "./Assignment/1_";
-    char outputFileName[strlen(argv[1]) + strlen(outputPath)];
+    char outputFileName[strlen(argv[1]) + strlen(outputPath) + 1];
     strcpy(outputFileName, outputPath);
     strcat(outputFileName, argv[1]);
 
