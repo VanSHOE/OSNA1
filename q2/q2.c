@@ -30,7 +30,9 @@ void main(int argc, char **argv)
 {
     if (argc != 4)
     {
-        printf("Usage: %s <input_file> start_char end_char\n", argv[0]);
+        char error[100];
+        sprintf(error, "Usage: %s <input_file> start_char end_char\n", argv[0]);
+        write(STDOUT_FILENO, error, strlen(error));
         return;
     }
     char buff[1];
@@ -54,13 +56,15 @@ void main(int argc, char **argv)
 
     if (start < 0 || start >= inputLength)
     {
-        printf("Invalid start index\n");
+        char *errorString = "Invalid start index\n";
+        write(STDOUT_FILENO, errorString, strlen(errorString));
         return;
     }
 
     if (end < 0 || end >= inputLength)
     {
-        printf("Invalid end index\n");
+        char *errorString = "Invalid end index\n";
+        write(STDOUT_FILENO, errorString, strlen(errorString));
         return;
     }
 
