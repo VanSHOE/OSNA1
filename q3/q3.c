@@ -63,13 +63,13 @@ void main(int argc, char **argv)
     stat(argv[2], &oldfileData);
     stat(argv[3], &dirData);
 
+    char existence[100];
+    sprintf(existence, "Directory is created: %s\n", S_ISDIR(dirData.st_mode) ? "Yes" : "No");
+    write(STDOUT_FILENO, existence, strlen(existence));
+
+    return;
     printPermissions(newfileData, argv[1]);
     printPermissions(oldfileData, argv[2]);
     printPermissions(dirData, argv[3]);
-
-    // printf("NFst_mode = %o\n", newfileData.st_mode);
-    // printf("OFst_mode = %o\n", oldfileData.st_mode);
-    // printf("Dst_mode = %o\n", dirData.st_mode);
-
     // write(STDOUT_FILENO, "\n", 1);
 }
