@@ -66,10 +66,58 @@ void main(int argc, char **argv)
     char existence[100];
     sprintf(existence, "Directory is created: %s\n", S_ISDIR(dirData.st_mode) ? "Yes" : "No");
     write(STDOUT_FILENO, existence, strlen(existence));
+    char areContentsReversed[100];
+    int newLength = 0;
+    while (read(newFile, buff, 1) > 0)
+    {
+        newLength++;
+    }
 
-    return;
+    int oldLength = 0;
+    while (read(oldFile, buff, 1) > 0)
+    {
+        oldLength++;
+    }
+
+    if (newLength != oldLength)
+    {
+        sprintf(areContentsReversed, "Whether file contents are reversed in newfile: No\n");
+        write(STDOUT_FILENO, areContentsReversed, strlen(areContentsReversed));
+    }
+    else
+    {
+        int lengthToGo = newLength;
+        int newFilePos = -1;
+        int oldFilePos = 0;
+        lseek(newFile, newFilePos--, SEEK_END);
+        lseek(oldFile, oldFilePos++, SEEK_SET);
+
+        int reversed = 1;
+
+        while (lengthToGo--)
+        {
+            char newBuff[1];
+            char oldBuff[1];
+            read(newFile, newBuff, 1);
+            read(oldFile, oldBuff, 1);
+            if (newBuff[0] != oldBuff[0])
+            {
+                sprintf(areContentsReversed, "Whether file contents are reversed in newfile: No\n");
+                write(STDOUT_FILENO, areContentsReversed, strlen(areContentsReversed));
+                reversed = 0;
+                break;
+            }
+            lseek(newFile, newFilePos--, SEEK_END);
+            lseek(oldFile, oldFilePos++, SEEK_SET);
+        }
+        if (reversed)
+        {
+            sprintf(areContentsReversed, "Whether file contents are reversed in newfile: Yes\n");
+            write(STDOUT_FILENO, areContentsReversed, strlen(areContentsReversed));
+        }
+    }
+
     printPermissions(newfileData, argv[1]);
     printPermissions(oldfileData, argv[2]);
     printPermissions(dirData, argv[3]);
-    // write(STDOUT_FILENO, "\n", 1);
 }
