@@ -5,6 +5,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#define buffLen 60000
+int min(int a, int b) {
+    return a < b ? a : b;
+}
+
+int max(int a, int b) {
+    return a > b ? a : b;
+}
+
 void main(int argc, char **argv)
 {
     if (argc != 2)
@@ -14,7 +23,7 @@ void main(int argc, char **argv)
         write(STDOUT_FILENO, error, strlen(error));
         return;
     }
-    char buff[1];
+    char buff[buffLen];
     int input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
     const char *outputPath = "./Assignment/1_";
@@ -25,24 +34,47 @@ void main(int argc, char **argv)
     int output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
     int inputLength = 0;
-
-    while (read(input, buff, 1) > 0)
+    int curLen = 0;
+    while ((curLen = read(input, buff, buffLen)) > 0)
     {
-        inputLength++;
+        inputLength += curLen;
     }
+    // printf("%d\n",inputLength);
 
-    int pos = -1;
-    lseek(input, pos--, SEEK_END);
+    lseek(input, -min(buffLen, inputLength), SEEK_END);
     int outputLength = 0;
-    while (read(input, buff, 1) > 0 && outputLength < inputLength)
+    int endLength = -1;
+    while ((curLen = read(input, buff, buffLen)) > 0 && outputLength < inputLength)
     {
-        write(output, buff, 1);
-        outputLength++;
+        curLen = endLength == -1 ? curLen : endLength;
+        lseek(input, -curLen, SEEK_CUR);
+        // printf("\nWriting %d bytes starting with %c\n", curLen, buff[0]);
+        for (int i = 0; i < curLen / 2; i++)
+        {
+            char temp = buff[i];
+            buff[i] = buff[curLen - i - 1];
+            buff[curLen - i - 1] = temp;
+        }
+        
+        write(output, buff, curLen);
+        outputLength += curLen;
+
+
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
-        lseek(input, pos--, SEEK_END);
+
+        // lseek(input, -min(buffLen, inputLength - outputLength), SEEK_CUR);
+        if(buffLen <= inputLength - outputLength)
+        {
+            lseek(input, -buffLen, SEEK_CUR);
+        }
+        else
+        {
+            lseek(input, -(inputLength - outputLength), SEEK_CUR);
+            endLength = inputLength - outputLength;
+        }
     }
     write(STDOUT_FILENO, "\n", 1);
     close(input);
