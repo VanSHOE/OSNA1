@@ -6,11 +6,13 @@
 #include <string.h>
 
 #define buffLen 60000
-int min(int a, int b) {
+int min(int a, int b)
+{
     return a < b ? a : b;
 }
 
-int max(int a, int b) {
+int max(int a, int b)
+{
     return a > b ? a : b;
 }
 
@@ -55,10 +57,9 @@ void main(int argc, char **argv)
             buff[i] = buff[curLen - i - 1];
             buff[curLen - i - 1] = temp;
         }
-        
+
         write(output, buff, curLen);
         outputLength += curLen;
-
 
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
@@ -66,7 +67,7 @@ void main(int argc, char **argv)
         write(STDOUT_FILENO, progressString, strlen(progressString));
 
         // lseek(input, -min(buffLen, inputLength - outputLength), SEEK_CUR);
-        if(buffLen <= inputLength - outputLength)
+        if (buffLen <= inputLength - outputLength)
         {
             lseek(input, -buffLen, SEEK_CUR);
         }

@@ -5,6 +5,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#define buffLen 60000
+int min(int a, int b)
+{
+    return a < b ? a : b;
+}
+
+int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
 void printPermissions(struct stat data, char *name)
 {
     char permissions[9];
@@ -50,7 +61,7 @@ void main(int argc, char **argv)
         write(STDOUT_FILENO, error, strlen(error));
         return;
     }
-    char buff[1];
+    char buff[buffLen];
 
     struct stat newfileData;
     struct stat oldfileData;
@@ -68,15 +79,17 @@ void main(int argc, char **argv)
     write(STDOUT_FILENO, existence, strlen(existence));
     char areContentsReversed[100];
     int newLength = 0;
-    while (read(newFile, buff, 1) > 0)
+    int curLen = 0;
+    while ((curLen = read(newFile, buff, buffLen)) > 0)
     {
-        newLength++;
+        newLength += curLen;
     }
 
     int oldLength = 0;
-    while (read(oldFile, buff, 1) > 0)
+    curLen = 0;
+    while ((curLen = read(oldFile, buff, buffLen)) > 0)
     {
-        oldLength++;
+        oldLength += curLen;
     }
 
     if (newLength != oldLength)
@@ -87,28 +100,40 @@ void main(int argc, char **argv)
     else
     {
         int lengthToGo = newLength;
-        int newFilePos = -1;
-        int oldFilePos = 0;
-        lseek(newFile, newFilePos--, SEEK_END);
-        lseek(oldFile, oldFilePos++, SEEK_SET);
+        lseek(newFile, -min(buffLen, newLength), SEEK_END);
+        lseek(oldFile, 0, SEEK_SET);
 
         int reversed = 1;
 
-        while (lengthToGo--)
+        while (lengthToGo)
         {
-            char newBuff[1];
-            char oldBuff[1];
-            read(newFile, newBuff, 1);
-            read(oldFile, oldBuff, 1);
-            if (newBuff[0] != oldBuff[0])
+            char newBuff[buffLen];
+            char oldBuff[buffLen];
+            int curLenNew = read(newFile, newBuff, buffLen);
+            lseek(newFile, -curLenNew, SEEK_CUR);
+
+            int curLenOld = read(oldFile, oldBuff, buffLen);
+
+            curLenNew = min(curLenNew, curLenOld);
+
+            lengthToGo -= curLenNew;
+
+            for (int i = 0; i < curLenNew; i++)
+            {
+                if (newBuff[i] != oldBuff[curLenNew - i - 1])
+                {
+                    reversed = 0;
+                    break;
+                }
+            }
+            if (!reversed)
             {
                 sprintf(areContentsReversed, "Whether file contents are reversed in newfile: No\n");
                 write(STDOUT_FILENO, areContentsReversed, strlen(areContentsReversed));
                 reversed = 0;
                 break;
             }
-            lseek(newFile, newFilePos--, SEEK_END);
-            lseek(oldFile, oldFilePos++, SEEK_SET);
+            lseek(newFile, -min(lengthToGo, buffLen), SEEK_CUR);
         }
         if (reversed)
         {
