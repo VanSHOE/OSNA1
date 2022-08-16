@@ -5,6 +5,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#define buffLen 60000
+
+int min(int a, int b)
+{
+    return a < b ? a : b;
+}
+
+int max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
 int power(int base, int exponent)
 {
     int result = 1;
@@ -48,10 +60,10 @@ void main(int argc, char **argv)
     int output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
     int inputLength = 0;
-
-    while (read(input, buff, 1) > 0)
+    int curLen = 0;
+    while ((curLen = read(input, buff, buffLen)) > 0)
     {
-        inputLength++;
+        inputLength += curLen;
     }
 
     if (start < 0 || start >= inputLength)
@@ -61,49 +73,100 @@ void main(int argc, char **argv)
         return;
     }
 
-    if (end < 0 || end >= inputLength)
+    if (end < 0 || end >= inputLength || end < start)
     {
         char *errorString = "Invalid end index\n";
         write(STDOUT_FILENO, errorString, strlen(errorString));
         return;
     }
 
-    int pos = start - 1;
-    lseek(input, pos--, SEEK_SET);
+    int pos = max(0, start - buffLen);
+    lseek(input, pos, SEEK_SET);
     int outputLength = 0;
-    while (outputLength < start && read(input, buff, 1) > 0)
+    int endLength = -1;
+    while (outputLength < start && (curLen = read(input, buff, buffLen)) > 0)
     {
-        write(output, buff, 1);
-        outputLength++;
+        lseek(input, -curLen, SEEK_CUR);
+        int readLength = endLength != -1 ? endLength : min(curLen, start - pos);
+        // reverse buff
+        for (int i = 0; i < readLength / 2; i++)
+        {
+            char temp = buff[i];
+            buff[i] = buff[readLength - i - 1];
+            buff[readLength - i - 1] = temp;
+        }
+        write(output, buff, readLength);
+        outputLength += readLength;
+
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
-        lseek(input, pos--, SEEK_SET);
+
+        if (buffLen <= pos)
+        {
+            lseek(input, -buffLen, SEEK_CUR);
+            pos -= buffLen;
+        }
+        else
+        {
+            lseek(input, 0, SEEK_SET);
+            endLength = pos;
+            pos = 0;
+        }
     }
 
-    lseek(input, start, SEEK_SET);
-    while (outputLength < end + 1 && read(input, buff, 1) > 0)
+    endLength = -1;
+
+    pos = start;
+    lseek(input, pos, SEEK_SET);
+    while (outputLength < end + 1 && (curLen = read(input, buff, buffLen)) > 0)
     {
-        write(output, buff, 1);
-        outputLength++;
+        int readLength = min(curLen, end - pos + 1);
+        write(output, buff, readLength);
+        outputLength += readLength;
+
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
     }
 
-    pos = -1;
-    lseek(input, pos--, SEEK_END);
-    while (read(input, buff, 1) > 0 && outputLength < inputLength)
+    pos = max(end + 1, inputLength - buffLen);
+    lseek(input, pos, SEEK_SET);
+    endLength = -1;
+    while ((curLen = read(input, buff, buffLen)) > 0 && outputLength < inputLength)
     {
-        write(output, buff, 1);
-        outputLength++;
+        curLen = endLength != -1 ? endLength : curLen;
+        lseek(input, -curLen, SEEK_CUR);
+        // reverse buff
+        for (int i = 0; i < curLen / 2; i++)
+        {
+            char temp = buff[i];
+            buff[i] = buff[curLen - i - 1];
+            buff[curLen - i - 1] = temp;
+        }
+        write(output, buff, curLen);
+        outputLength += curLen;
+
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
-        lseek(input, pos--, SEEK_END);
+
+        // pos - buffLen >= end + 1
+
+        if (buffLen <= pos - end - 1)
+        {
+            lseek(input, -buffLen, SEEK_CUR);
+            pos -= buffLen;
+        }
+        else
+        {
+            lseek(input, end + 1, SEEK_SET);
+            endLength = pos - end - 1;
+            pos = end + 1;
+        }
     }
 
     write(STDOUT_FILENO, "\n", 1);
