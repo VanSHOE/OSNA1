@@ -30,9 +30,19 @@ void main(long long argc, char **argv)
     long long input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
     const char *outputPath = "./Assignment/1_";
-    char outputFileName[strlen(argv[1]) + strlen(outputPath) + 1];
+
+    char *fileName = argv[1];
+    for (long long i = 0; i < strlen(argv[1]) - 1; i++)
+    {
+        if (argv[1][i] == '/')
+        {
+            fileName = &argv[1][i + 1];
+        }
+    }
+
+    char outputFileName[strlen(fileName) + strlen(outputPath) + 1];
     strcpy(outputFileName, outputPath);
-    strcat(outputFileName, argv[1]);
+    strcat(outputFileName, fileName);
 
     long long output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
