@@ -32,6 +32,7 @@ void main(long long argc, char **argv)
     const char *outputPath = "./Assignment/1_";
 
     char *fileName = argv[1];
+    // Find the file name
     for (long long i = 0; i < strlen(argv[1]) - 1; i++)
     {
         if (argv[1][i] == '/')
@@ -48,20 +49,23 @@ void main(long long argc, char **argv)
 
     long long inputLength = 0;
     long long curLen = 0;
+    // Iterate through the input file and find the length of the input file
     while ((curLen = read(input, buff, buffLen)) > 0)
     {
         inputLength += curLen;
     }
-    // printf("%d\n",inputLength);
 
+    // Start the cursor from the end so the buffer reading ends at the last item
     lseek(input, -min(buffLen, inputLength), SEEK_END);
     long long outputLength = 0;
-    long long endLength = -1;
+    long long endLength = -1; // This variable will be changed from -1 when the beginning of file is reached where the data to be read can be less than buffLen
     while ((curLen = read(input, buff, buffLen)) > 0 && outputLength < inputLength)
     {
+        // length to be read depends on the bytes received, if the beginning of file is reached, the data to be read can be less than buffLen
         curLen = endLength == -1 ? curLen : endLength;
         lseek(input, -curLen, SEEK_CUR);
-        // printf("\nWriting %d bytes starting with %c\n", curLen, buff[0]);
+
+        // reverse buffer
         for (long long i = 0; i < curLen / 2; i++)
         {
             char temp = buff[i];
@@ -77,7 +81,6 @@ void main(long long argc, char **argv)
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
 
-        // lseek(input, -min(buffLen, inputLength - outputLength), SEEK_CUR);
         if (buffLen <= inputLength - outputLength)
         {
             lseek(input, -buffLen, SEEK_CUR);

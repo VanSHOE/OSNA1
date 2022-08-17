@@ -51,13 +51,12 @@ void main(long long argc, char **argv)
     char buff[buffLen];
     long long start = atoi(argv[2]);
     long long end = atoi(argv[3]);
-    // printf arg1
-    // printf("%s\n", argv[1]);
+
     long long input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
     const char *outputPath = "./Assignment/2_";
 
-    // get file name from input path with loop
+    // get file name from input path
     char *fileName = argv[1];
     for (long long i = 0; i < strlen(argv[1]) - 1; i++)
     {
@@ -66,13 +65,10 @@ void main(long long argc, char **argv)
             fileName = &argv[1][i + 1];
         }
     }
-    // printf file name
-    // printf("%s\n", fileName);
+
     char outputFileName[strlen(fileName) + strlen(outputPath) + 1];
     strcpy(outputFileName, outputPath);
     strcat(outputFileName, fileName);
-    // printf path
-    // printf("%s\n", outputFileName);
 
     long long output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
@@ -83,6 +79,7 @@ void main(long long argc, char **argv)
         inputLength += curLen;
     }
 
+    // error checking on start and end indexes
     if (start < 0 || start >= inputLength)
     {
         char *errorString = "Invalid start index\n";
@@ -97,14 +94,15 @@ void main(long long argc, char **argv)
         return;
     }
 
+    // pos is position of the cursor in the input file.
     long long pos = max(0, start - buffLen);
     lseek(input, pos, SEEK_SET);
     long long outputLength = 0;
     long long endLength = -1;
     while (outputLength < start && (curLen = read(input, buff, buffLen)) > 0)
     {
-        lseek(input, -curLen, SEEK_CUR);
-        long long readLength = endLength != -1 ? endLength : min(curLen, start - pos);
+        lseek(input, -curLen, SEEK_CUR);                                               // reverse the read's change on cursor
+        long long readLength = endLength != -1 ? endLength : min(curLen, start - pos); // if endLength is set, use it, otherwise use min of curLen and start - pos to ensure we do not cross the end of the first segment
         // reverse buff
         for (long long i = 0; i < readLength / 2; i++)
         {
@@ -120,6 +118,7 @@ void main(long long argc, char **argv)
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
 
+        // end checking to ensure we do not read out of bounds of the segment
         if (buffLen <= pos)
         {
             lseek(input, -buffLen, SEEK_CUR);
@@ -137,6 +136,7 @@ void main(long long argc, char **argv)
 
     pos = start;
     lseek(input, pos, SEEK_SET);
+    // no reversing, standard read and write
     while (outputLength < end + 1 && (curLen = read(input, buff, buffLen)) > 0)
     {
         lseek(input, -curLen, SEEK_CUR);
@@ -154,6 +154,7 @@ void main(long long argc, char **argv)
         write(STDOUT_FILENO, progressString, strlen(progressString));
     }
 
+    // start from the 3rd segment
     pos = max(end + 1, inputLength - buffLen);
     lseek(input, pos, SEEK_SET);
     endLength = -1;
@@ -175,10 +176,7 @@ void main(long long argc, char **argv)
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
-        // printf("At end2\n");
 
-        // pos - buffLen >= end + 1
-        // printf("%lld\n", pos);
         if (buffLen <= pos - end - 1)
         {
             lseek(input, -buffLen, SEEK_CUR);
@@ -186,7 +184,6 @@ void main(long long argc, char **argv)
         }
         else
         {
-            // printf("At end\n");
             lseek(input, end + 1, SEEK_SET);
             endLength = pos - end - 1;
             pos = end + 1;
@@ -194,8 +191,6 @@ void main(long long argc, char **argv)
     }
 
     write(STDOUT_FILENO, "\n", 1);
-    // printf("At endfinal\n");
     close(input);
     close(output);
-    // printf("At endfinal22\n");
 }

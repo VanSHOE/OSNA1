@@ -18,7 +18,7 @@ long long max(long long a, long long b)
 
 void printPermissions(struct stat data, char *name)
 {
-    char permissions[9];
+    char permissions[9]; // Array storing the permission bits of all 9 perm types
     permissions[0] = data.st_mode & S_IRUSR ? 1 : 0;
     permissions[1] = data.st_mode & S_IWUSR ? 1 : 0;
     permissions[2] = data.st_mode & S_IXUSR ? 1 : 0;
@@ -80,6 +80,7 @@ void main(long long argc, char **argv)
     char areContentsReversed[100];
     long long newLength = 0;
     long long curLen = 0;
+    // Calculating length of new file
     while ((curLen = read(newFile, buff, buffLen)) > 0)
     {
         newLength += curLen;
@@ -87,11 +88,13 @@ void main(long long argc, char **argv)
 
     long long oldLength = 0;
     curLen = 0;
+    // Calculating length of old file
     while ((curLen = read(oldFile, buff, buffLen)) > 0)
     {
         oldLength += curLen;
     }
 
+    // If lengths are not equal, then we can instantly say that they are not reverse of each other since length is preserved during reversing process
     if (newLength != oldLength)
     {
         sprintf(areContentsReversed, "Whether file contents are reversed in newfile: No\n");
@@ -104,7 +107,7 @@ void main(long long argc, char **argv)
         lseek(oldFile, 0, SEEK_SET);
 
         long long reversed = 1;
-
+        // If lengths are equal, then we just iterate through the elements of both buffers in opposite order and check if they are equal
         while (lengthToGo)
         {
             char newBuff[buffLen];
@@ -122,6 +125,7 @@ void main(long long argc, char **argv)
             {
                 if (newBuff[i] != oldBuff[curLenNew - i - 1])
                 {
+                    // If any element is not equal, then clearly the files are not reverse of each other
                     reversed = 0;
                     break;
                 }
