@@ -6,12 +6,12 @@
 #include <string.h>
 
 #define buffLen 60000
-int min(int a, int b)
+long long min(long long a, long long b)
 {
     return a < b ? a : b;
 }
 
-int max(int a, int b)
+long long max(long long a, long long b)
 {
     return a > b ? a : b;
 }
@@ -42,9 +42,9 @@ void printPermissions(struct stat data, char *name)
     strcpy(types[1], "write");
     strcpy(types[2], "execute");
 
-    for (int i = 0; i < 3; i++)
+    for (long long i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 3; j++)
+        for (long long j = 0; j < 3; j++)
         {
             sprintf(permissionString, "%s has %s permission on %s: %s\n", stakeHolders[i], types[j], name, permissions[i * 3 + j] ? "Yes" : "No");
             write(STDOUT_FILENO, permissionString, strlen(permissionString));
@@ -52,7 +52,7 @@ void printPermissions(struct stat data, char *name)
     }
 }
 
-void main(int argc, char **argv)
+void main(long long argc, char **argv)
 {
     if (argc != 4)
     {
@@ -67,8 +67,8 @@ void main(int argc, char **argv)
     struct stat oldfileData;
     struct stat dirData;
 
-    int newFile = open(argv[1], O_RDONLY);
-    int oldFile = open(argv[2], O_RDONLY);
+    long long newFile = open(argv[1], O_RDONLY);
+    long long oldFile = open(argv[2], O_RDONLY);
 
     stat(argv[1], &newfileData);
     stat(argv[2], &oldfileData);
@@ -78,14 +78,14 @@ void main(int argc, char **argv)
     sprintf(existence, "Directory is created: %s\n", S_ISDIR(dirData.st_mode) ? "Yes" : "No");
     write(STDOUT_FILENO, existence, strlen(existence));
     char areContentsReversed[100];
-    int newLength = 0;
-    int curLen = 0;
+    long long newLength = 0;
+    long long curLen = 0;
     while ((curLen = read(newFile, buff, buffLen)) > 0)
     {
         newLength += curLen;
     }
 
-    int oldLength = 0;
+    long long oldLength = 0;
     curLen = 0;
     while ((curLen = read(oldFile, buff, buffLen)) > 0)
     {
@@ -99,26 +99,26 @@ void main(int argc, char **argv)
     }
     else
     {
-        int lengthToGo = newLength;
+        long long lengthToGo = newLength;
         lseek(newFile, -min(buffLen, newLength), SEEK_END);
         lseek(oldFile, 0, SEEK_SET);
 
-        int reversed = 1;
+        long long reversed = 1;
 
         while (lengthToGo)
         {
             char newBuff[buffLen];
             char oldBuff[buffLen];
-            int curLenNew = read(newFile, newBuff, buffLen);
+            long long curLenNew = read(newFile, newBuff, buffLen);
             lseek(newFile, -curLenNew, SEEK_CUR);
 
-            int curLenOld = read(oldFile, oldBuff, buffLen);
+            long long curLenOld = read(oldFile, oldBuff, buffLen);
 
             curLenNew = min(curLenNew, curLenOld);
 
             lengthToGo -= curLenNew;
 
-            for (int i = 0; i < curLenNew; i++)
+            for (long long i = 0; i < curLenNew; i++)
             {
                 if (newBuff[i] != oldBuff[curLenNew - i - 1])
                 {

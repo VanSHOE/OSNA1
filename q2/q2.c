@@ -4,33 +4,34 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define buffLen 60000
 
-int min(int a, int b)
+long long min(long long a, long long b)
 {
     return a < b ? a : b;
 }
 
-int max(int a, int b)
+long long max(long long a, long long b)
 {
     return a > b ? a : b;
 }
 
-int power(int base, int exponent)
+long long power(long long base, long long exponent)
 {
-    int result = 1;
-    for (int i = 0; i < exponent; i++)
+    long long result = 1;
+    for (long long i = 0; i < exponent; i++)
     {
         result *= base;
     }
     return result;
 }
 
-int convertStringtoNumber(char *string)
+long long convertStringtoNumber(char *string)
 {
-    int number = 0;
-    for (int i = 0; i < strlen(string); i++)
+    long long number = 0;
+    for (long long i = 0; i < strlen(string); i++)
     {
         number += (string[i] - '0') * power(10, strlen(string) - i - 1);
     }
@@ -38,7 +39,7 @@ int convertStringtoNumber(char *string)
     return number;
 }
 
-void main(int argc, char **argv)
+void main(long long argc, char **argv)
 {
     if (argc != 4)
     {
@@ -47,20 +48,36 @@ void main(int argc, char **argv)
         write(STDOUT_FILENO, error, strlen(error));
         return;
     }
-    char buff[1];
-    int start = convertStringtoNumber(argv[2]);
-    int end = convertStringtoNumber(argv[3]);
-    int input = open(argv[1], O_RDONLY);
+    char buff[buffLen];
+    long long start = atoi(argv[2]);
+    long long end = atoi(argv[3]);
+    // printf arg1
+    // printf("%s\n", argv[1]);
+    long long input = open(argv[1], O_RDONLY);
     mkdir("./Assignment", 0777);
     const char *outputPath = "./Assignment/2_";
-    char outputFileName[strlen(argv[1]) + strlen(outputPath) + 1];
+
+    // get file name from input path with loop
+    char *fileName = argv[1];
+    for (long long i = 0; i < strlen(argv[1]) - 1; i++)
+    {
+        if (argv[1][i] == '/')
+        {
+            fileName = &argv[1][i + 1];
+        }
+    }
+    // printf file name
+    // printf("%s\n", fileName);
+    char outputFileName[strlen(fileName) + strlen(outputPath) + 1];
     strcpy(outputFileName, outputPath);
-    strcat(outputFileName, argv[1]);
+    strcat(outputFileName, fileName);
+    // printf path
+    // printf("%s\n", outputFileName);
 
-    int output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    long long output = open(outputFileName, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 
-    int inputLength = 0;
-    int curLen = 0;
+    long long inputLength = 0;
+    long long curLen = 0;
     while ((curLen = read(input, buff, buffLen)) > 0)
     {
         inputLength += curLen;
@@ -80,16 +97,16 @@ void main(int argc, char **argv)
         return;
     }
 
-    int pos = max(0, start - buffLen);
+    long long pos = max(0, start - buffLen);
     lseek(input, pos, SEEK_SET);
-    int outputLength = 0;
-    int endLength = -1;
+    long long outputLength = 0;
+    long long endLength = -1;
     while (outputLength < start && (curLen = read(input, buff, buffLen)) > 0)
     {
         lseek(input, -curLen, SEEK_CUR);
-        int readLength = endLength != -1 ? endLength : min(curLen, start - pos);
+        long long readLength = endLength != -1 ? endLength : min(curLen, start - pos);
         // reverse buff
-        for (int i = 0; i < readLength / 2; i++)
+        for (long long i = 0; i < readLength / 2; i++)
         {
             char temp = buff[i];
             buff[i] = buff[readLength - i - 1];
@@ -124,7 +141,7 @@ void main(int argc, char **argv)
     {
         lseek(input, -curLen, SEEK_CUR);
 
-        int readLength = min(curLen, end - pos + 1);
+        long long readLength = min(curLen, end - pos + 1);
         write(output, buff, readLength);
         outputLength += readLength;
 
@@ -145,7 +162,7 @@ void main(int argc, char **argv)
         curLen = endLength != -1 ? endLength : curLen;
         lseek(input, -curLen, SEEK_CUR);
         // reverse buff
-        for (int i = 0; i < curLen / 2; i++)
+        for (long long i = 0; i < curLen / 2; i++)
         {
             char temp = buff[i];
             buff[i] = buff[curLen - i - 1];
@@ -158,9 +175,10 @@ void main(int argc, char **argv)
         char progressString[100];
         sprintf(progressString, "\r%.2f%%", progress);
         write(STDOUT_FILENO, progressString, strlen(progressString));
+        // printf("At end2\n");
 
         // pos - buffLen >= end + 1
-
+        // printf("%lld\n", pos);
         if (buffLen <= pos - end - 1)
         {
             lseek(input, -buffLen, SEEK_CUR);
@@ -168,7 +186,7 @@ void main(int argc, char **argv)
         }
         else
         {
-
+            // printf("At end\n");
             lseek(input, end + 1, SEEK_SET);
             endLength = pos - end - 1;
             pos = end + 1;
@@ -176,6 +194,8 @@ void main(int argc, char **argv)
     }
 
     write(STDOUT_FILENO, "\n", 1);
+    // printf("At endfinal\n");
     close(input);
     close(output);
+    // printf("At endfinal22\n");
 }
