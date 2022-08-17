@@ -122,9 +122,14 @@ void main(int argc, char **argv)
     lseek(input, pos, SEEK_SET);
     while (outputLength < end + 1 && (curLen = read(input, buff, buffLen)) > 0)
     {
+        lseek(input, -curLen, SEEK_CUR);
+
         int readLength = min(curLen, end - pos + 1);
         write(output, buff, readLength);
         outputLength += readLength;
+
+        lseek(input, readLength, SEEK_CUR);
+        pos += readLength;
 
         double progress = (double)outputLength * 100 / (double)inputLength;
         char progressString[100];
@@ -163,6 +168,7 @@ void main(int argc, char **argv)
         }
         else
         {
+
             lseek(input, end + 1, SEEK_SET);
             endLength = pos - end - 1;
             pos = end + 1;
